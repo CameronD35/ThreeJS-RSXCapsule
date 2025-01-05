@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { getViewPosition } from 'three/tsl';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/examples/jsm/Addons.js';
+import { OrbitControls } from 'three/examples/jsm/Addons.js';
 
 // SCENE & CAMERA
 const scene = new THREE.Scene();
@@ -20,62 +21,78 @@ loader.setDRACOLoader(draco)
 const renderer = new THREE.WebGLRenderer();
 renderer.setSize( window.innerWidth * 0.95, window.innerHeight * 0.95);
 
+// CAMERA CONTROL
+const controls = new OrbitControls(camera, renderer.domElement);
+
+// LIGHT
+const light = new THREE.PointLight(0xffffff, 100)
+light.position.set(2.5, 2.5, 2.5)
+scene.add(light)
+
+// SHOW AXES
+const axes = new THREE.AxesHelper(5);
+scene.add(axes);
+
 // ADD ELEMENT
 document.body.appendChild(renderer.domElement);
 
-// CUBE
-const cubeGeometry = new THREE.BoxGeometry(1, 1, 1);
-const cubeMaterial = new THREE.MeshBasicMaterial( {
-	color: 0x8800ff
-});
-const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
-scene.add(cube);
-
-// LINE
-const lineMaterial = new THREE.LineBasicMaterial({
-	color: 0x00ff00
-});
-
-const points = [
-	new THREE.Vector3(-2, 0, 0),
-	new THREE.Vector3(0, 2, 0),
-	new THREE.Vector3(2, 0, 0)
-]
-
-const lineGeometry = new THREE.BufferGeometry().setFromPoints(points);
-
-const line = new THREE.Line(lineGeometry, lineMaterial);
-scene.add(line);
-
 // CAPSULE
-loader.load('capsule/capsule_rev_b.gltf', (gltf) => {
+let model;
+loader.load('capsule/capsule1.gltf', (gltf) => {
+
 
 	scene.add(gltf.scene);
 
-	gltf.animations;
-	gltf.scene;
-	gltf.scenes;
-	gltf.cameras;
 	gltf.asset;
+
+	model = gltf.scene
 }, 
 (xhr) => {console.log((xhr.loaded/xhr.total * 100) + '% Loaded')},
 (err) => {console.log('error')});
 
 
 // CAMERA ADJUST
-camera.position.set(0, 0, 100);
+camera.position.set(0, 3, 5);
 camera.lookAt(0, 0, 0);
 
 // ANIMATION
 function animate(){
-	cube.rotation.x += 0.01;
-	cube.rotation.y += 0.01;
-	cube.rotation.z += 0.01;
-	document.getElementById('text').textContent = 2;
 
-	line.rotation.x += 0.01;
+	if (model) {
+		//model.rotation.x += 0.01;
+		//getCapsulePosition(model);
+	}
 	renderer.render(scene, camera);
 }
+
+function getCapsulePosition(capsuleModel) {
+	//let pos = capsuleModel.position;
+
+	console.log(capsuleModel.isObject3D);
+	const box = new THREE.Box3().expandByObject(capsuleModel);
+
+	const posMin = box.min.z;
+	const posMax = box.max.z;
+	
+
+
+	const direction = posMax.sub(posMin).normalize();
+	console.log(direction)
+
+
+	
+	// ARROW
+
+	const origin = new THREE.Vector3(0, 0, 0);
+
+	const arrow = new THREE.ArrowHelper(direction, origin, 10, 0x00ff00);
+	scene.add(arrow);
+
+
+
+	//return [pos.x, pos.y, pos.z];
+}
+
 
 // START ANIMATION
 renderer.setAnimationLoop(animate);
