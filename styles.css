@@ -9,3 +9,8 @@ body {
     position: fixed;
     bottom: 5px;
 }
+
+canvas{
+    border-radius: 10px;
+    border: 10px solid black;
+}
