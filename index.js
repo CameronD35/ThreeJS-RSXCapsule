@@ -60,7 +60,7 @@ function animate(){
 
 	if (model) {
 		//model.rotation.x += 0.01;
-		//getCapsulePosition(model);
+		getCapsulePosition(model);
 	}
 	renderer.render(scene, camera);
 }
@@ -71,13 +71,13 @@ function getCapsulePosition(capsuleModel) {
 	console.log(capsuleModel.isObject3D);
 	const box = new THREE.Box3().expandByObject(capsuleModel);
 
-	const posMin = box.min.z;
-	const posMax = box.max.z;
+	// const posMin = box.min.z;
+	// const posMax = box.max.z;
 	
 
 
-	const direction = posMax.sub(posMin).normalize();
-	console.log(direction)
+	// const direction = posMax.sub(posMin).normalize();
+	// console.log(direction)
 
 
 	
@@ -85,7 +85,7 @@ function getCapsulePosition(capsuleModel) {
 
 	const origin = new THREE.Vector3(0, 0, 0);
 
-	const arrow = new THREE.ArrowHelper(direction, origin, 10, 0x00ff00);
+	const arrow = new THREE.ArrowHelper(new THREE.Vector3(0, 0, 1), origin, 2, 0x00ff00);
 	scene.add(arrow);
 
 
