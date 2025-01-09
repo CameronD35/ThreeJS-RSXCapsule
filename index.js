@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { getViewPosition } from 'three/tsl';
+import { getViewPosition, rotate } from 'three/tsl';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/examples/jsm/Addons.js';
 import { OrbitControls } from 'three/examples/jsm/Addons.js';
@@ -38,6 +38,7 @@ document.body.appendChild(renderer.domElement);
 
 // CAPSULE
 let model;
+let modelLoaded = false;
 loader.load('capsule/capsule1.gltf', (gltf) => {
 
 
@@ -46,6 +47,7 @@ loader.load('capsule/capsule1.gltf', (gltf) => {
 	gltf.asset;
 
 	model = gltf.scene
+	modelLoaded = true;
 }, 
 (xhr) => {console.log((xhr.loaded/xhr.total * 100) + '% Loaded')},
 (err) => {console.log('error')});
@@ -63,6 +65,8 @@ function animate(){
 		getCapsulePosition(model);
 	}
 	renderer.render(scene, camera);
+
+	rotateWithQuaternion(model);
 }
 
 function getCapsulePosition(capsuleModel) {
@@ -92,6 +96,26 @@ function getCapsulePosition(capsuleModel) {
 
 	//return [pos.x, pos.y, pos.z];
 }
+
+function rotateWithQuaternion(object){
+
+	if(modelLoaded){
+
+
+
+		const vector = new THREE.Vector4(Math.random(), Math.random(), Math.random(), Math.random())
+
+		const normal = vector.normalize();
+
+		console.log(normal)
+
+		const quaternion = new THREE.Quaternion(normal.x, normal.y, normal.z, normal.w);
+		console.log(object.quaternion);
+
+		object.applyQuaternion(quaternion);
+	}
+}
+
 
 
 // START ANIMATION
