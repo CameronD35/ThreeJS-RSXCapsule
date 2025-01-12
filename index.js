@@ -1,5 +1,4 @@
 import * as THREE from 'three';
-import { getViewPosition, rotate } from 'three/tsl';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/examples/jsm/Addons.js';
 import { OrbitControls } from 'three/examples/jsm/Addons.js';
@@ -105,10 +104,6 @@ function centerModel(obj, precisionAmount){
 	geometry.center();
 }
 
-// axis (string) - string denoting the axis of which to align the center of the object (x, y, z)
-function alignToAxis(obj, currentAngles, axis){
-	console.log(currentAngles);
-}
 
 function addArrowToScene(){
 	const origin = new THREE.Vector3(0, 0, 0);
@@ -116,38 +111,6 @@ function addArrowToScene(){
 	arrow = new THREE.ArrowHelper(new THREE.Vector3(0, 0, 1), origin, 2, 0x00ff00);
 	scene.add(arrow);
 }
-
-// function getCenterPosition(obj) {
-// 	//let pos = capsuleModel.position;
-
-// 	//console.log(capsuleModel.isObject3D);
-// 	const box = new THREE.Box3().expandByObject(obj);
-
-
-// 	let coords = new THREE.Vector3();
-	
-// 	box.getCenter(coords);
-
-// 	console.log(coords);
-
-// 	return coords;
-
-// 	// const posMin = box.min.z;
-// 	// const posMax = box.max.z;
-	
-
-
-// 	// const direction = posMax.sub(posMin).normalize();
-// 	// console.log(direction)
-
-
-	
-// 	// ARROW
-
-
-
-// 	//return [pos.x, pos.y, pos.z];
-// }
 
 function getCurrentAngle(obj, euler){
 	if (euler){
@@ -170,15 +133,81 @@ function rotateWithQuaternion(object){
 	}
 }
 
-function calculateNewRotation(prevQuaternion){
+function calculateNewRotation(prevQuaternion, gyroscopeData){
+
+	// Angular velocities in respective axes
+	const angV_X = toRad(gyroscopeData.x)/2;
+	const angV_Y = toRad(gyroscopeData.y)/2;
+	const angV_Z = toRad(gyroscopeData.z)/2;
+
+	// https://www.steppeschool.com/pages/blog/imu-and-quaternions
+	let matrixA = [
+		[1, -angV_X, -angV_Y, -angV_Z],
+		[angV_X, 1, angV_Z, -angV_Y],
+		[-angV_Y, -angV_Z, 1, angV_X],
+		[angV_Z, angV_Y, -angV_X, 1]
+	];
+
+	let matrixB = [
+		[prevQuaternion.x],
+		[prevQuaternion.w],
+		[prevQuaternion.y],
+		[prevQuaternion.z]
+	];
+
+	let result = multiplyMatricies(matrixA, matrixB);
 	
-	let matrixA = new THREE.Matrix3()
+	return result;
 	
 }
 
+function multiplyMatricies(A, B){
+
+
+	if (A[0].length == B.length){
+		console.log('works', A.length);
+
+		let result = []
+
+		for(let i = 0; i < A.length; i++){
+			let row = []
+
+			for(let j = 0; j < B[0].length; j++){
+
+				let total = 0;
+
+				for(let k = 0; k < A[0].length; k++){
+
+					//console.log(i, j, k);
+					total = total + (A[i][k] * B[k][j]);
+				}
+
+				console.log(total);
+				row.push([total]);
+			}
+
+			result.push(row);
+
+
+		}
+
+		return result;
+
+	} else {
+		console.log('cannot multiply matricies');
+	}
+
+
+}
+
+// angV = angular velocity
+function toRad(angV){
+	return ((angV * Math.PI)/180);
+}
+
 let test = new THREE.Quaternion(0, 1, 0, 0);
-calculateNewRotation(test);
-console.log(test);
+let example = calculateNewRotation(test, sampleData[0]);
+console.log(example);
 
 function findType(obj, type){
 	let geometry;
