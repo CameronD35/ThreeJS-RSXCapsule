@@ -2,36 +2,27 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/examples/jsm/Addons.js';
 import { OrbitControls } from 'three/examples/jsm/Addons.js';
+import data from './data.js';
 
-const sampleData = [
-	{
-		x: -1.8904000000000000,
-		y: 2.4392000000000000,
-		z: 0.9388000000000000
-	}, 
-	{
-		x: -1.6826,
-		y: -0.8904,
-		z: 2.1708
-	},
-	{
-		x: 2.5608000000000000,
-		y: -0.2560000000000000,
-		z: -1.4146
-	}
-]
+
+// window.addEventListener('resize', (evt) => {
+// 	let windowDimensions = evt.target.getBoundingClientRect;
+// })
+
+
 
 // SCENE & CAMERA
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x888888)
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+let frame = 0;
 
 // LOADER
 const loader = new GLTFLoader();
 
 const draco = new DRACOLoader();
 draco.setDecoderPath('/examples/jsm/libs/draco');
-loader.setDRACOLoader(draco)
+loader.setDRACOLoader(draco);
 
 
 // RENDERER
@@ -79,6 +70,8 @@ loader.load('capsule/capsule1.gltf', (gltf) => {
 (err) => {console.log('error')});
 
 
+
+
 // CAMERA ADJUST
 camera.position.set(0, 3, 5);
 camera.lookAt(0, 0, 0);
@@ -88,14 +81,16 @@ let arrow;
 
 // ANIMATION
 function animate(){
+	frame++;
 	renderer.render(scene, camera);
-	
 
 	if(modelLoaded){
 		//rotateWithQuaternion(model);
 		//console.log(model.prevPositon);
 	}
 }
+
+
 
 function centerModel(obj, precisionAmount){
 	const geometry = findType(obj, 'Mesh');
@@ -121,24 +116,24 @@ function getCurrentAngle(obj, euler){
 }
 
 
-function rotateWithQuaternion(object){
+function applyQuaternion(object, gyroscopeData){
 
 	if(modelLoaded){
 
-		const quaternion = new THREE.Quaternion(0, 0.8, 0, 0.6)
+		let prevQuaternion = object.quaternion;
 
-		console.log(object.quaternion);
+		let newQuaternion = calculateNewQuaternion(prevQuaternion, gyroscopeData);
 
-		object.applyQuaternion(quaternion);
+		object.quaternion.slerp(newQuaternion, 0.5);
 	}
 }
 
-function calculateNewRotation(prevQuaternion, gyroscopeData){
+function calculateNewQuaternion(prevQuaternion, gyroscopeData){
 
 	// Angular velocities in respective axes
-	const angV_X = toRad(gyroscopeData.x)/2;
-	const angV_Y = toRad(gyroscopeData.y)/2;
-	const angV_Z = toRad(gyroscopeData.z)/2;
+	const angV_X = toRad(gyroscopeData['Gyroscope_x'])/2;
+	const angV_Y = toRad(gyroscopeData['Gyroscope_y'])/2;
+	const angV_Z = toRad(gyroscopeData['Gyroscope_z'])/2;
 
 	// https://www.steppeschool.com/pages/blog/imu-and-quaternions
 	let matrixA = [
@@ -157,7 +152,10 @@ function calculateNewRotation(prevQuaternion, gyroscopeData){
 
 	let result = multiplyMatricies(matrixA, matrixB);
 	
-	return result;
+	let newQuaternion = new THREE.Quaternion(result[0][0][0], result[1][0][0], result[2][0][0], result[3][0][0]);
+	newQuaternion.normalize();
+
+	return newQuaternion;
 	
 }
 
@@ -182,7 +180,7 @@ function multiplyMatricies(A, B){
 					total = total + (A[i][k] * B[k][j]);
 				}
 
-				console.log(total);
+				//console.log(total);
 				row.push([total]);
 			}
 
@@ -205,10 +203,6 @@ function toRad(angV){
 	return ((angV * Math.PI)/180);
 }
 
-let test = new THREE.Quaternion(0, 1, 0, 0);
-let example = calculateNewRotation(test, sampleData[0]);
-console.log(example);
-
 function findType(obj, type){
 	let geometry;
 
@@ -221,9 +215,12 @@ function findType(obj, type){
 	return geometry;
 }
 
-// window.addEventListener('resize', (evt) => {
-// 	let windowDimensions = evt.target.getBoundingClientRect;
-// })
+let testNum = 0
+setInterval(() => {
+	if(modelLoaded){
+		applyQuaternion(model, data[testNum++])
+	}
+}, 100)
 
 // START ANIMATION
 renderer.setAnimationLoop(animate);
