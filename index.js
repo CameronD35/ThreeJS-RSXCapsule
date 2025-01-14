@@ -5,9 +5,7 @@ import { OrbitControls } from 'three/examples/jsm/Addons.js';
 import data from './data.js';
 
 
-// window.addEventListener('resize', (evt) => {
-// 	let windowDimensions = evt.target.getBoundingClientRect;
-// })
+window.addEventListener('resize', resizeScene);
 
 
 
@@ -213,6 +211,15 @@ function findType(obj, type){
 	});
 
 	return geometry;
+}
+
+function resizeScene(){
+
+	camera.aspect = window.innerWidth / window.innerHeight;
+
+	camera.updateProjectionMatrix();
+
+	renderer.setSize( window.innerWidth * 0.95, window.innerHeight * 0.95);
 }
 
 let testNum = 0
